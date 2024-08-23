@@ -2,14 +2,16 @@ const express = require("express");
 const { Server } = require("socket.io");
 const app = express();
 const server = require("http").createServer(app);
+require("dotenv").config();
+// const process = require("process");
 // const io = require("socket.io")(server);
+// console.log("process.env.FRONT_ENDPOINT => ", process.env.PORT);
 const io = new Server(server, {
   cors: {
     origin: process.env.FRONT_ENDPOINT || "http://localhost:5173",
   },
 });
-const authRoutes = require("./routes/routes");
-require("dotenv").config();
+// const authRoutes = require("./routes/routes");
 
 // const { getUser, createRoom, getRooms } = require("./db/index");
 
@@ -26,7 +28,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
-app.use(authRoutes);
+// app.use(authRoutes);
 
 app.set("port", process.env.PORT || 5000);
 
@@ -49,6 +51,10 @@ app.get("/get-cookie", (req, res) => {
 });
 
 app.get("/protected", (req, res) => {});
+
+app.get("/test", (req, res) => {
+  res.status(200).send("OK");
+});
 
 let Rooms = [];
 let Users = [];
