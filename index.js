@@ -5,7 +5,7 @@ const server = require("http").createServer(app);
 // const io = require("socket.io")(server);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: process.env.FRONT_ENDPOINT || "http://localhost:5173",
   },
 });
 const authRoutes = require("./routes/routes");
