@@ -60,7 +60,7 @@ let Rooms = [];
 let Users = [];
 
 io.on("connection", (socket) => {
-  console.log("user connected => ", socket.id);
+  // console.log("user connected => ", socket.id);
 
   // Add user to the list
   Users.push({ id: socket.id });
@@ -69,19 +69,18 @@ io.on("connection", (socket) => {
   socket.emit("room_list", Rooms);
 
   socket.on("createRoom", ({ room, socket_name }) => {
-    console.log("==== room created ====", room);
-    console.log("==== user created ====", socket_name);
+    // console.log("==== room created ====", room);
+    // console.log("==== user created ====", socket_name);
 
     // Add name to the user
     const userIdx = Users.findIndex((e) => e.id === socket.id);
     Users[userIdx].name = socket_name;
     Users[userIdx].room = room;
 
-    socket.join(room);
     io.to(room).emit("joinRoom");
     Rooms.push({ room, id: uuidv4() });
-    console.log("Users => ", Users);
-    console.log("Rooms => ", Rooms);
+    // console.log("Users => ", Users);
+    // console.log("Rooms => ", Rooms);
   });
 
   socket.on("joinRoom", ({ room, socket_name }) => {
@@ -93,10 +92,12 @@ io.on("connection", (socket) => {
       Users[userIdx].room = room;
     }
 
+    socket.join(room);
+
     // io.to(room).emit("joinRoom");
-    console.log("Users join => ", Users);
-    console.log("Rooms join => ", Rooms);
-    console.log(`socket ${socket.id} has joined room ${room}`);
+    // console.log("Users join => ", Users);
+    // console.log("Rooms join => ", Rooms);
+    // console.log(`socket ${socket.id} has joined room ${room}`);
   });
 
   // io.of("/").adapter.on("create-room", ({ room, socket_name }) => {
@@ -124,7 +125,7 @@ io.on("connection", (socket) => {
   // });
 
   socket.on("dibujandoSocket", (data) => {
-    socket.to(data.room_name).emit("dibujandoSocket", data);
+    io.to(data.room).emit("dibujandoSocket", data);
   });
 
   // socket.on("changeColor", (data) => {
@@ -132,7 +133,7 @@ io.on("connection", (socket) => {
   // });
 
   socket.on("borrando", (data) => {
-    io.to(data.room_name).emit("borrando", data);
+    io.to(data.room).emit("borrando", data);
   });
 
   socket.on("disconnect", (data) => {
@@ -150,11 +151,10 @@ io.on("connection", (socket) => {
       }
     }
 
-    console.log("Users onDelete => ", Users);
-    console.log("Rooms onDelete => ", Rooms);
+    // console.log("Users onDelete => ", Users);
+    // console.log("Rooms onDelete => ", Rooms);
 
-    console.log("disconnected => ", data);
-    // const filteredArr = Users.filter(number => number % 2 !== 0);
+    // console.log("disconnected => ", data);
   });
 });
 
