@@ -93,36 +93,13 @@ io.on("connection", (socket) => {
     }
 
     socket.join(room);
+    io.to(room).emit("newSocketList", [...Users]);
 
     // io.to(room).emit("joinRoom");
     // console.log("Users join => ", Users);
     // console.log("Rooms join => ", Rooms);
     // console.log(`socket ${socket.id} has joined room ${room}`);
   });
-
-  // io.of("/").adapter.on("create-room", ({ room, socket_name }) => {
-  //   // Add name to the user
-  //   const userID = Users.findIndex((e) => e.id === socket.id);
-  //   Users[userID].name = socket_name;
-
-  //   socket.join(room);
-
-  //   Rooms.push({ room, id: uuidv4() });
-  //   console.log(`socket ${socket_name} room ${room} was created`);
-  // });
-
-  // io.of("/").adapter.on("join-room", (room, socket_id) => {
-  //   const userIdx = Users.findIndex((e) => e.id === socket.id);
-  //   if(userIdx !== -1){
-  //     Users.push({ id: socket_id, name:  })
-  //   } else {
-  //     Users[userIdx].name = socket_id;
-  //   }
-  //   // io.to(room).emit("joinRoom");
-  //   console.log("Users => ", Users);
-  //   console.log("Rooms => ", Rooms);
-  //   console.log(`socket ${socket_id} has joined room ${room}`);
-  // });
 
   socket.on("dibujandoSocket", (data) => {
     io.to(data.room).emit("dibujandoSocket", data);
