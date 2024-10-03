@@ -3,13 +3,14 @@ const { Server } = require("socket.io");
 const app = express();
 const server = require("http").createServer(app);
 require("dotenv").config();
+
 // const process = require("process");
 // const io = require("socket.io")(server);
 // console.log("process.env.FRONT_ENDPOINT => ", process.env.PORT);
 const io = new Server(server, {
-  cors: {
-    origin: process.env.FRONT_ENDPOINT || "http://localhost:5173",
-  },
+	cors: {
+		origin: process.env.FRONT_ENDPOINT || "http://localhost:5173",
+	},
 });
 // const authRoutes = require("./routes/routes");
 
@@ -20,9 +21,9 @@ const { v4: uuidv4 } = require("uuid");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const corsOptions = {
-  origin: process.env.FRONT_ENDPOINT || "http://localhost:5173",
-  credentials: true,
-  optionsSuccessStatus: 200,
+	origin: process.env.FRONT_ENDPOINT || "http://localhost:5173",
+	credentials: true,
+	optionsSuccessStatus: 200,
 };
 
 app.use(cors(corsOptions));
@@ -37,104 +38,113 @@ app.set("port", process.env.PORT || 5000);
 // const { createRoom } = require("./helpers/roomHelper");
 
 app.get("/set-cookie", (req, res) => {
-  res.cookie("isAuthenticated", true, {
-    httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000,
-  });
-  res.send("cookies are set");
+	res.cookie("isAuthenticated", true, {
+		httpOnly: true,
+		maxAge: 24 * 60 * 60 * 1000,
+	});
+	res.send("cookies are set");
 });
 
 app.get("/get-cookie", (req, res) => {
-  const cookies = req.cookies;
-  // console.log(cookies)
-  res.json(cookies);
+	const cookies = req.cookies;
+	// console.log(cookies)
+	res.json(cookies);
 });
 
 app.get("/protected", (req, res) => {});
 
 app.get("/test", (req, res) => {
-  res.status(200).send("OK");
+	res.status(200).send("OK");
 });
 
 let Rooms = [];
 let Users = [];
 
 io.on("connection", (socket) => {
-  // console.log("user connected => ", socket.id);
+	// console.log("user connected => ", socket.id);
 
-  // Add user to the list
-  Users.push({ id: socket.id });
+	// Add user to the list
+	Users.push({ id: socket.id });
 
-  // Return the rooms list
-  socket.emit("room_list", Rooms);
+	socket.emit("room_list", Rooms);
 
-  socket.on("createRoom", ({ room, socket_name }) => {
-    // console.log("==== room created ====", room);
-    // console.log("==== user created ====", socket_name);
+	// Return the rooms list every 2s
+	setInterval(() => {
+		socket.emit("room_list", Rooms);
+	}, 2000);
 
-    // Add name to the user
-    const userIdx = Users.findIndex((e) => e.id === socket.id);
-    Users[userIdx].name = socket_name;
-    Users[userIdx].room = room;
+	socket.on("createRoom", ({ room, socket_name }) => {
+		// console.log("==== room created ====", room);
+		// console.log("==== user created ====", socket_name);
 
-    io.to(room).emit("joinRoom");
-    Rooms.push({ room, id: uuidv4() });
-    // console.log("Users => ", Users);
-    // console.log("Rooms => ", Rooms);
-  });
+		// Add name to the user
+		const userIdx = Users.findIndex((e) => e.id === socket.id);
+		Users[userIdx].name = socket_name;
+		Users[userIdx].room = room;
 
-  socket.on("joinRoom", ({ room, socket_name }) => {
-    const userIdx = Users.findIndex((e) => e.id === socket.id);
-    if (userIdx === -1) {
-      Users.push({ id: socket.id, name: socket_name, room });
-    } else {
-      Users[userIdx].name = socket_name;
-      Users[userIdx].room = room;
-    }
+		io.to(room).emit("joinRoom");
+		Rooms.push({ room, id: uuidv4() });
 
-    socket.join(room);
-    io.to(room).emit("newSocketList", [...Users]);
+		socket.emit("room_list", Rooms);
 
-    // io.to(room).emit("joinRoom");
-    // console.log("Users join => ", Users);
-    // console.log("Rooms join => ", Rooms);
-    // console.log(`socket ${socket.id} has joined room ${room}`);
-  });
+		// console.log("Users => ", Users);
+		// console.log("Rooms => ", Rooms);
+	});
 
-  socket.on("dibujandoSocket", (data) => {
-    io.to(data.room).emit("dibujandoSocket", data);
-  });
+	socket.on("joinRoom", ({ room, socket_name }) => {
+		const userIdx = Users.findIndex((e) => e.id === socket.id);
+		if (userIdx === -1) {
+			Users.push({ id: socket.id, name: socket_name, room });
+		} else {
+			Users[userIdx].name = socket_name;
+			Users[userIdx].room = room;
+		}
 
-  // socket.on("changeColor", (data) => {
-  //   io.to(data.room_id).emit("changeColor", data);
-  // });
+		socket.join(room);
+		io.to(room).emit("newSocketList", [...Users]);
 
-  socket.on("borrando", (data) => {
-    io.to(data.room).emit("borrando", data);
-  });
+		socket.emit("room_list", Rooms);
 
-  socket.on("disconnect", (data) => {
-    Users = Users.filter((e) => e.id !== socket.id); // Delete the user
+		// io.to(room).emit("joinRoom");
+		// console.log("Users join => ", Users);
+		// console.log("Rooms join => ", Rooms);
+		// console.log(`socket ${socket.id} has joined room ${room}`);
+	});
 
-    if (Users.length === 0) {
-      Rooms = []; // If there's no users, delete every room
-    } else {
-      //If the room has no users, just delete the empty room
-      for (let i = 0; i < Rooms.length; i++) {
-        const idx = Users.findIndex((user) => user.room === Rooms[i].room);
-        if (idx === -1) {
-          Rooms.splice(i, 1);
-        }
-      }
-    }
+	socket.on("dibujandoSocket", (data) => {
+		io.to(data.room).emit("dibujandoSocket", data);
+	});
 
-    // console.log("Users onDelete => ", Users);
-    // console.log("Rooms onDelete => ", Rooms);
+	// socket.on("changeColor", (data) => {
+	//   io.to(data.room_id).emit("changeColor", data);
+	// });
 
-    // console.log("disconnected => ", data);
-  });
+	socket.on("borrando", (data) => {
+		io.to(data.room).emit("borrando", data);
+	});
+
+	socket.on("disconnect", (data) => {
+		Users = Users.filter((e) => e.id !== socket.id); // Delete the user
+
+		if (Users.length === 0) {
+			Rooms = []; // If there's no users, delete every room
+		} else {
+			//If the room has no users, just delete the empty room
+			for (let i = 0; i < Rooms.length; i++) {
+				const idx = Users.findIndex((user) => user.room === Rooms[i].room);
+				if (idx === -1) {
+					Rooms.splice(i, 1);
+				}
+			}
+		}
+
+		socket.emit("room_list", Rooms);
+
+		// console.log("Users onDelete => ", Users);
+		// console.log("Rooms onDelete => ", Rooms);
+
+		// console.log("disconnected => ", data);
+	});
 });
 
-server.listen(app.get("port"), () =>
-  console.log(`server listening on port ${app.get("port")}`)
-);
+server.listen(app.get("port"), () => console.log(`server listening on port ${app.get("port")}`));
