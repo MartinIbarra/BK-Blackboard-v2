@@ -12,7 +12,7 @@ const io = new Server(server, {
 		origin: process.env.FRONT_ENDPOINT || "http://localhost:5173",
 	},
 });
-// const authRoutes = require("./routes/routes");
+const authRoutes = require("./routes/routes");
 
 // const { getUser, createRoom, getRooms } = require("./db/index");
 
@@ -29,7 +29,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
-// app.use(authRoutes);
+ app.use(authRoutes);
 
 app.set("port", process.env.PORT || 5000);
 
