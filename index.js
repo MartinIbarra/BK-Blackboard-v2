@@ -1,9 +1,12 @@
 const express = require("express");
 const { Server } = require("socket.io");
 const app = express();
+const path = require("path");
 const server = require("http").createServer(app);
-require("dotenv").config();
-
+const dotenv = require("dotenv");
+dotenv.config({ path: [".env.development", ".env.production"] });
+const oauthRoutes = require("./routes/oauth");
+const requestRoutes = require("./routes/oauth/request");
 // const process = require("process");
 // const io = require("socket.io")(server);
 // console.log("process.env.FRONT_ENDPOINT => ", process.env.PORT);
@@ -12,7 +15,7 @@ const io = new Server(server, {
 		origin: process.env.FRONT_ENDPOINT || "http://localhost:5173",
 	},
 });
-const authRoutes = require("./routes/routes");
+// const authRoutes = require("./routes/routes");
 
 // const { getUser, createRoom, getRooms } = require("./db/index");
 
@@ -20,6 +23,7 @@ const { v4: uuidv4 } = require("uuid");
 
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
+const { OAuth2Client } = require("google-auth-library");
 const corsOptions = {
 	origin: process.env.FRONT_ENDPOINT || "http://localhost:5173",
 	credentials: true,
@@ -29,7 +33,36 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
- app.use(authRoutes);
+
+app.get("/", async (req, res) => {
+	const code = req.query.code;
+	console.log("code => ", code);
+
+	const getUserData = async (access_token) => {
+		const response = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${access_token}`);
+		const data = await response.json();
+		console.log(data);
+	};
+
+	try {
+		const redirectUrl = "http://localhost:5000";
+		const oAuth2Client = new OAuth2Client(process.env.CLIENT_ID, process.env.CLIENT_SECRET, redirectUrl);
+		const response = await oAuth2Client.getToken(code);
+		await oAuth2Client.setCredentials(response.tokens);
+		console.log("Token Acquired => ", response.tokens);
+		const user = oAuth2Client.credentials;
+		console.log("credentials => ", user);
+		await getUserData(user.access_token);
+	} catch (err) {
+		console.log("Error with Google SSO: ", err);
+	}
+
+	res.redirect(303, "https://localhost:5173/");
+});
+
+// app.use(authRoutes);
+app.use("/oauth", oauthRoutes);
+app.use("/request", requestRoutes);
 
 app.set("port", process.env.PORT || 5000);
 

@@ -2,6 +2,8 @@ const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 const { verifyUserName, createUser, getUser } = require("../db/index");
 const { OAuth2Client } = require("google-auth-library");
+const dotenv = require("dotenv");
+dotenv.config({ path: [".env.development", ".env.production"] });
 // const { AuthClient } = require("google-auth-library");
 const bcrypt = require("bcrypt");
 
@@ -106,34 +108,37 @@ module.exports.logout = (req, res) => {
 	res.status(200).json({ logout: true });
 };
 
-const getUserData = async (access_token) => {
-	const response = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token${access_token}`);
-	const data = await response.json();
-	console.log(data);
-};
+// module.exports.oauth = async (req, res, next) => {
+// 	const code = req.query.code;
+// 	console.log("code => ", code);
 
-module.exports.home = async (req, res, next) => {
-	const code = req.query.code;
-	console.log("code => ", code);
-	try {
-		const redirectUrl = "localhost:5000/";
-		const oAuth2Client = new OAuth2Client(process.env.CLIENT_ID, process.env.CLIENT_SECRET, redirectUrl);
-		const response = await oAuth2Client().getToken(code);
-		await oAuth2Client.setCredentials(response.tokens);
-		console.log("Token Acquired => ", response.tokens);
-		const user = oAuth2Client.credentials;
-		console.log("credentials => ", user);
-		await getUserData(user.access_token);
-	} catch (err) {
-		console.log("Error with Google SSO: ", err);
-	}
-};
+// 	const getUserData = async (access_token) => {
+// 		const response = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${access_token}`);
+// 		const data = await response.json();
+// 		console.log(data);
+// 	};
 
-module.exports.oAuth = async (req, res, next) => {
+// 	try {
+// 		const redirectUrl = "http://localhost:5000/oauth";
+// 		const oAuth2Client = new OAuth2Client(process.env.CLIENT_ID, process.env.CLIENT_SECRET, redirectUrl);
+// 		const response = await oAuth2Client.getToken(code);
+// 		await oAuth2Client.setCredentials(response.tokens);
+// 		console.log("Token Acquired => ", response.tokens);
+// 		const user = oAuth2Client.credentials;
+// 		console.log("credentials => ", user);
+// 		await getUserData(user.access_token);
+// 	} catch (err) {
+// 		console.log("Error with Google SSO: ", err);
+// 	}
+
+// 	res.redirect(303, "https://localhost:5173/");
+// };
+
+module.exports.request = async (req, res, next) => {
 	res.header("Access-Controll-Allow-Origin", "http://localhost:5173");
 	res.header("Referrer-Policy", "no-referrer-when-downgrade");
 
-	const redirectUrl = "http://localhost:5173/oauth";
+	const redirectUrl = "http://localhost:5000";
 
 	const oAuth2Client = new OAuth2Client(process.env.CLIENT_ID, process.env.CLIENT_SECRET, redirectUrl);
 
