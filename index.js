@@ -42,6 +42,7 @@ app.get("/", async (req, res) => {
 		const response = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${access_token}`);
 		const data = await response.json();
 		console.log(data);
+		return data;
 	};
 
 	try {
@@ -50,14 +51,14 @@ app.get("/", async (req, res) => {
 		const response = await oAuth2Client.getToken(code);
 		await oAuth2Client.setCredentials(response.tokens);
 		console.log("Token Acquired => ", response.tokens);
-		const user = oAuth2Client.credentials;
-		console.log("credentials => ", user);
-		await getUserData(user.access_token);
+		const credentials = oAuth2Client.credentials;
+		// console.log("credentials => ", user);
+		const user = await getUserData(credentials.access_token);
+		res.cookie("user", { name: user.name, family_name: user.family_name, picture: user.picture, id_token: credentials.id_token }, { maxAge: credentials.expiry_date });
+		res.send("<script>window.close()</script>");
 	} catch (err) {
 		console.log("Error with Google SSO: ", err);
 	}
-
-	res.redirect(303, "https://localhost:5173/");
 });
 
 // app.use(authRoutes);
@@ -71,11 +72,14 @@ app.set("port", process.env.PORT || 5000);
 // const { createRoom } = require("./helpers/roomHelper");
 
 app.get("/set-cookie", (req, res) => {
-	res.cookie("isAuthenticated", true, {
-		httpOnly: true,
-		maxAge: 24 * 60 * 60 * 1000,
-	});
-	res.send("cookies are set");
+	console.log(req.body);
+	res.send(req.body);
+	// res.cookie("isAuthenticated", true, {
+	// 	httpOnly: true,
+	// 	maxAge: 24 * 60 * 60 * 1000,
+	// });
+	// res.cookie("userInfoSSO",`name: ${}`, { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 } )
+	// res.send("<script>window.close()</script>");
 });
 
 app.get("/get-cookie", (req, res) => {
