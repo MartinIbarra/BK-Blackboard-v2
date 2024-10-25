@@ -54,7 +54,16 @@ app.get("/", async (req, res) => {
 		const credentials = oAuth2Client.credentials;
 		// console.log("credentials => ", user);
 		const user = await getUserData(credentials.access_token);
-		res.cookie("user", { name: user.name, family_name: user.family_name, picture: user.picture, id_token: credentials.id_token }, { maxAge: credentials.expiry_date });
+		res.cookie(
+			"user",
+			{
+				name: user.name,
+				family_name: user.family_name,
+				picture: user.picture,
+				// id_token: credentials.id_token
+			},
+			{ maxAge: credentials.expiry_date }
+		);
 		res.send("<script>window.close()</script>");
 	} catch (err) {
 		console.log("Error with Google SSO: ", err);
