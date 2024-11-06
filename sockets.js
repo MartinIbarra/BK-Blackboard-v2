@@ -7,17 +7,12 @@ let Users = [];
 const initSocket = (io) => {
   io.on("connection", (socket) => {
     //console.log("user connected => ", socket.id);
-    // console.log("Users => ", Users);
+     //console.log("Users => ", Users);
 
     // Add user to the list
     Users.push({ id: socket.id });
     //console.log(`Users => ${JSON.stringify(Users)}`)
-    // socket.emit("room_list", Rooms);
-
-    // Return the rooms list every 2s
-    setInterval(() => {
-      socket.emit("room_list", Rooms);
-    }, 1500);
+    socket.emit("room_list", Rooms);
 
     socket.on("createRoom", ({ room, socket_cred }) => {
       // Add name to the user
@@ -29,7 +24,7 @@ const initSocket = (io) => {
       io.to(room).emit("joinRoom");
       const room_uuid = uuid()
       Rooms.push({ room, id: room_uuid });
-      console.log(JSON.stringify(Rooms))
+      //console.log(JSON.stringify(Rooms))
 
       socket.emit("room_list", Rooms);
     });
@@ -45,7 +40,7 @@ const initSocket = (io) => {
       }
       socket.join(room);
       io.to(room).emit("newSocketList", Users);
-      console.log(`Rooms ${JSON.stringify(Rooms)}`)
+      //console.log(`Rooms ${JSON.stringify(Rooms)}`)
       socket.emit("room_list", Rooms);
     });
 
@@ -56,9 +51,7 @@ const initSocket = (io) => {
           Users.splice(1, userIdx)
         }
       }
-      console.log(`exit room => ${room}`)
-      console.log(`Room => ${Rooms}`)
-      console.log(`socket_cred => ${socket_cred}`)
+      socket.emit("room_list", Rooms);
     })
 
     socket.on("dibujandoSocket", (data) => {
