@@ -1,36 +1,43 @@
-const { uuid } = require('uuidv4');
+const { uuid } = require("uuidv4");
 // const { app } = require('./index')
 
 let Rooms = [];
 let Users = [];
 
+setInterval(() => {
+  console.log("---------------------------------");
+  console.log(`Rooms => ${JSON.stringify(Rooms)}`);
+  console.log(`Users => ${JSON.stringify(Users)}`);
+  console.log("---------------------------------");
+}, 2000);
+
 const initSocket = (io) => {
   io.on("connection", (socket) => {
-    //console.log("user connected => ", socket.id);
-     //console.log("Users => ", Users);
+    // console.log("user connected => ", socket.id);
+    // console.log("Users => ", Users);
 
     // Add user to the list
     Users.push({ id: socket.id });
-    //console.log(`Users => ${JSON.stringify(Users)}`)
+    // console.log(`Users => ${JSON.stringify(Users)}`)
     socket.emit("room_list", Rooms);
 
     socket.on("createRoom", ({ room, socket_cred }) => {
       // Add name to the user
-      //console.log(socket_cred)
+      // console.log(socket_cred)
       const userIdx = Users.findIndex((e) => e.id === socket.id);
       Users[userIdx].name = socket_cred.name;
       Users[userIdx].room = room;
 
       io.to(room).emit("joinRoom");
-      const room_uuid = uuid()
+      const room_uuid = uuid();
       Rooms.push({ room, id: room_uuid });
-      //console.log(JSON.stringify(Rooms))
+      // console.log(JSON.stringify(Rooms))
 
       socket.emit("room_list", Rooms);
     });
 
     socket.on("joinRoom", ({ room, socket_cred }) => {
-      //console.log(`socket_cred in joinRoom => ${JSON.stringify(socket_cred)}`)
+      // console.log(`socket_cred in joinRoom => ${JSON.stringify(socket_cred)}`)
       const userIdx = Users.findIndex((e) => e.id === socket.id);
       if (userIdx === -1) {
         Users.push({ id: socket.id, name: socket_cred.name, room });
@@ -40,41 +47,44 @@ const initSocket = (io) => {
       }
       socket.join(room);
       io.to(room).emit("newSocketList", Users);
-      //console.log(`Rooms ${JSON.stringify(Rooms)}`)
+      // console.log(`Rooms ${JSON.stringify(Rooms)}`)
       socket.emit("room_list", Rooms);
     });
 
     socket.on("leaveRoom", ({ room, socket_cred }) => {
-      const userIdx = Users.findIndex((e) => e.id === socket.id)
+      const userIdx = Users.findIndex((e) => e.id === socket.id);
       for (let i = 0; i < Users.length; i++) {
         if (userIdx !== -1) {
-          Users.splice(1, userIdx)
+          Users.splice(1, userIdx);
         }
       }
       socket.emit("room_list", Rooms);
-    })
+    });
 
     socket.on("dibujandoSocket", (data) => {
-      //console.log(`dibujandoSocket ${JSON.stringify(data)}`)
+      // console.log(`dibujandoSocket ${JSON.stringify(data)}`)
       io.to(data.room).emit("dibujandoSocket", data);
     });
 
     // socket.on("changeColor", (data) => {
     //   io.to(data.room_id).emit("changeColor", data);
     // });
+    socket.on("socketMsg", (data) => {
+      io.to(data.room).emit("socketMsg", data);
+    });
 
     socket.on("borrando", (data) => {
       io.to(data.room).emit("borrando", data);
     });
 
     socket.on("disconnect", (data) => {
-      console.log(`data on disconnect => ${data}`)
+      console.log(`data on disconnect => ${data}`);
       Users = Users.filter((e) => e.id !== socket.id); // Delete the user
 
       if (Users.length === 0) {
         Rooms = []; // If there's no users, delete every room
       } else {
-        //If the room has no users, just delete the empty room
+        // If the room has no users, just delete the empty room
         for (let i = 0; i < Rooms.length; i++) {
           const idx = Users.findIndex((user) => user.room === Rooms[i].room);
           if (idx === -1) {
@@ -85,5 +95,5 @@ const initSocket = (io) => {
       socket.emit("room_list", Rooms);
     });
   });
-}
+};
 module.exports = { initSocket, Users, Rooms };
